@@ -17,4 +17,4 @@ api.add_resource(ItemList, '/items')
 api.add_resource(UserRegister, '/register')
 
 if __name__ == '__main__':
-        rest_api.run(port = 4000, debug = True)
+        rest_api.run(port = 5000, debug = True)
