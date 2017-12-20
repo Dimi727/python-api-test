@@ -11,37 +11,62 @@ class Item(Resource):
           help = "This field cannot left blank!"
     )
 
-    @jwt_required()
-    def get(self, name):
+    @classmethod
+    def find_by_name(cls, name):
         connection = sqlite3.connect('data.db')
         cursor = connection.cursor()
 
         query = "SELECT * FROM items WHERE name=?"
         result = cursor.execute(query, (name,))
-        row = result.fetchone()
+        row = result.fetchone() 
         connection.close()
 
         if row:
             return {'item': {'name': row[0], 'price': row[1]}}
+
+    @jwt_required()
+    def get(self, name):
+        item = self.find_by_name(name)
+        if item:
+            return item
         return {'message':"Item not found!"}, 404
 
     def post(self, name):
-
-            
-        if next(filter(lambda x: x['name'] == name, items), None) is not None:
+        if self.find_by_name(name):                         # if Item.find_by_name(name) also works
             return{'message': "An item with name '{}' already exists.".format(name)}, 400
 
         data = Item.parser.parse_args()
 
         item = {'name': name, 'price': data['price']}
-        items.append(item)
+
+        connection = sqlite3.connect('data.db')
+        cursor = connection.cursor()
+
+        query = "INSERT INTO items VALUES (?,?)"
+        cursor.execute(query, (item['name'], item['price']))
+
+        connection.commit()
+        connection.close()
+
         return item, 201
 
     @jwt_required()
     def delete(self, name):
-        global items
-        items = list(filter(lambda x: x['name'] != name, items))
-        return {'items': 'Item deleted'}
+        item = self.find_by_name(name)
+
+        if item:
+            connection = sqlite3.connect('data.db')
+            cursor = connection.cursor()
+
+            query = "DELETE FROM items WHERE name=?"
+            cursor.execute(query, (name,))
+
+            connection.commit()
+            connection.close()
+
+            return{'message': '{}'"got deleted from db.".format(name)}, 200
+        else:
+            return {'message': "Item '{}' does not exist.".format(name)}, 404
 
     def put(self, name):
         data = Item.parser.parse_args()
