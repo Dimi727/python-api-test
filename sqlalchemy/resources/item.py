@@ -50,7 +50,7 @@ class Item(Resource):
             connection.commit()
             connection.close()
 
-            return{'message': '{}'"got deleted from db.".format(name)}, 200
+            return{'message': '{}'" got deleted from db.".format(name)}, 200
         else:
             return {'message': "Item '{}' does not exist.".format(name)}, 404
     
